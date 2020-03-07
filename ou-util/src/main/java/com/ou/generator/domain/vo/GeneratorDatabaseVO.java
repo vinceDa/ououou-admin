@@ -1,12 +1,8 @@
 package com.ou.generator.domain.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import com.ou.generator.domain.GeneratorTable;
-import com.ou.generator.domain.dto.GeneratorDatabaseDTO;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -41,6 +37,11 @@ public class GeneratorDatabaseVO {
      *  生成树时需要的uniqueKey
      */
     private String key;
+
+    /**
+     *  前端使用, 和name值一样
+     */
+    private String title;
 
     /**
      *  数据库下的表

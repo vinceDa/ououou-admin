@@ -1,13 +1,12 @@
 package com.ou.system.security.domain;
 
-import javax.validation.constraints.NotBlank;
-
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
+
 /**
- * @author Zheng Jie
- * @date 2018-11-30
+ * @author vince
  */
 @Getter
 @Setter

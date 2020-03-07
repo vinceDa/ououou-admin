@@ -1,14 +1,8 @@
 package com.ou.generator.domain.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.ou.common.base.BaseDO;
-import com.ou.generator.domain.GeneratorDatabase;
-import com.ou.generator.domain.dto.GeneratorConnectionDTO;
-import com.ou.generator.domain.dto.GeneratorDatabaseDTO;
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +18,16 @@ public class GeneratorConnectionVO {
      * 主键id
      */
     private Long id;
+
+    /**
+     *  前端使用, 和name值一样
+     */
+    private String title;
+
+    /**
+     *  前端数据唯一标识
+     */
+    private String key;
 
     /**
      *  连接名
@@ -63,7 +67,7 @@ public class GeneratorConnectionVO {
     /**
      *  连接下的数据库
      */
-    private List<GeneratorDatabaseDTO> children;
+    private List<GeneratorDatabaseVO> children;
 
     /**
      *  创建时间

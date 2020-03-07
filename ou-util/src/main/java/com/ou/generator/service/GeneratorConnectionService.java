@@ -3,6 +3,7 @@ package com.ou.generator.service;
 import com.ou.generator.domain.GeneratorConnection;
 import com.ou.generator.domain.dto.GeneratorConnectionDTO;
 import com.ou.generator.domain.query.GeneratorConnectionQueryCriteria;
+import com.ou.generator.domain.vo.GeneratorConnectionVO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -110,6 +111,6 @@ public interface GeneratorConnectionService {
      *  获取所有连接的信息包括数据库、表, 以树的形式展示
      * @return 所有连接的集合
      */
-    List<GeneratorConnectionDTO> listConnectionInfoTree();
+    List<GeneratorConnectionVO> listConnectionInfoTree();
 
 }

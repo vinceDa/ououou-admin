@@ -1,37 +1,33 @@
 package com.ou.system.rest;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-
-import com.ou.system.security.domain.JwtUser;
-import com.ou.system.security.util.SecurityUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.lang.TypeReference;
+import cn.hutool.core.util.StrUtil;
 import com.ou.system.domain.Menu;
 import com.ou.system.domain.Role;
 import com.ou.system.domain.dto.MenuDTO;
 import com.ou.system.domain.dto.UserDTO;
 import com.ou.system.domain.query.MenuQueryCriteria;
 import com.ou.system.domain.vo.MenuVO;
+import com.ou.system.security.util.SecurityUtil;
 import com.ou.system.service.MenuService;
 import com.ou.system.service.UserService;
-
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.lang.TypeReference;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -59,6 +55,15 @@ public class MenuController {
         while (iterator.hasNext()) {
             Role next = iterator.next();
             totalMenu.addAll(next.getMenus());
+        }
+        // 根据筛选条件剔除不符合条件的菜单
+        String blurry = menuQueryCriteria.getBlurry();
+        Boolean show = menuQueryCriteria.getShow();
+        if (StrUtil.isNotEmpty(blurry)) {
+            totalMenu = totalMenu.stream().filter(single -> single.getName().contains(blurry)).collect(Collectors.toSet());
+        }
+        if (show != null) {
+            totalMenu = totalMenu.stream().filter(single -> single.getShow().equals(show)).collect(Collectors.toSet());
         }
         List<MenuDTO> menuDTOS = Convert.convert(new TypeReference<List<MenuDTO>>() {
         }, totalMenu);

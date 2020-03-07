@@ -1,11 +1,18 @@
 package com.ou.system.rest;
 
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.lang.TypeReference;
+import com.ou.common.exception.BadRequestException;
+import com.ou.system.domain.Job;
+import com.ou.system.domain.dto.DepartmentDTO;
+import com.ou.system.domain.dto.JobDTO;
+import com.ou.system.domain.query.JobQueryCriteria;
+import com.ou.system.domain.vo.JobVO;
 import com.ou.system.security.util.SecurityUtil;
+import com.ou.system.service.DepartmentService;
+import com.ou.system.service.JobService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -17,19 +24,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.ou.common.exception.BadRequestException;
-import com.ou.system.domain.Job;
-import com.ou.system.domain.dto.DepartmentDTO;
-import com.ou.system.domain.dto.JobDTO;
-import com.ou.system.domain.query.JobQueryCriteria;
-import com.ou.system.domain.vo.JobVO;
-import com.ou.system.service.DepartmentService;
-import com.ou.system.service.JobService;
-
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.lang.TypeReference;
-import lombok.extern.slf4j.Slf4j;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 
 /**

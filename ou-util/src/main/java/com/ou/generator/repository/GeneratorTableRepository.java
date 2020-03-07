@@ -1,11 +1,8 @@
 package com.ou.generator.repository;
 
-import com.ou.generator.domain.GeneratorDatabase;
+import com.ou.generator.domain.GeneratorTable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
-import com.ou.generator.domain.GeneratorTable;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -36,11 +33,17 @@ public interface GeneratorTableRepository extends JpaRepository<GeneratorTable, 
     void deleteAllByDatabaseIdIn(List<Long> databaseIds);
 
     /**
-     *  查询数据库下的所有表
-     * @param databaseName 数据库名
-     * @return 表的实体集合
+     *  删除所有不在表id集合中的数据库信息
+     * @param tableIds 表id集合
      */
-    @Query(value = "select TABLE_NAME name, TABLE_COLLATION colloation from information_schema.tables  where table_schema = ?", nativeQuery = true)
-    List<GeneratorTable> listAll(String databaseName);
+    void deleteAllByIdNotIn(List<Long> tableIds);
+
+    /**
+     *  根据数据库id和表名获取表信息
+     * @param databaseId 数据库id
+     * @param name 表名
+     * @return 符合条件的表信息
+     */
+    GeneratorTable getByDatabaseIdAndName(Long databaseId, String name);
 
 }

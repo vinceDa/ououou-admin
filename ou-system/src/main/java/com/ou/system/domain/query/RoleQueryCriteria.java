@@ -20,7 +20,7 @@ public class RoleQueryCriteria extends BaseQuery<RoleQueryCriteria> {
     /**
      *  模糊查询条件: 角色名
      */
-    @QueryField(blurry = {"name"})
+     @QueryField(blurry = {"name"})
     private String blurry;
 
     /**

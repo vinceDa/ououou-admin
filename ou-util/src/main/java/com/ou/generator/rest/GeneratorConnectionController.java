@@ -107,7 +107,6 @@ public class GeneratorConnectionController {
     @GetMapping(value = "/connections/infoTree")
     // @PreAuthorize("hasAuthority('connection_test')")
     public ResponseEntity listConnectionInfoTree() {
-        List<GeneratorConnectionDTO> generatorConnectionDTOS = generatorConnectionService.listConnectionInfoTree();
-        return ResponseEntity.ok(Convert.convert(new TypeReference<List<GeneratorConnectionVO>>() {}, generatorConnectionDTOS));
+        return ResponseEntity.ok(generatorConnectionService.listConnectionInfoTree());
     }
 }

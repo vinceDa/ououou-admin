@@ -1,11 +1,8 @@
 package com.ou.generator.repository;
 
-import com.ou.generator.domain.GeneratorTable;
+import com.ou.generator.domain.GeneratorField;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
-import com.ou.generator.domain.GeneratorField;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -43,13 +40,17 @@ public interface GeneratorFieldRepository extends JpaRepository<GeneratorField, 
     void deleteAllByTableIdIn(List<Long> tableIds);
 
     /**
-     *  查询表下的所有字段
-     * @param tableName 表名
-     * @param databaseName 数据库名
-     * @return 表的实体集合
+     *  删除所有不在字段id集合内的字段信息
+     * @param fieldIds 字段id集合
      */
-    @Query(value = "select COLUMN_NAME name, COLUMN_TYPE type, IS_NULLABLE is_required, COLUMN_COMMENT comment " +
-            "from information_schema.COLUMNS where table_name = ? and table_schema = ?;", nativeQuery = true)
-    List<GeneratorField> listAll(String tableName, String databaseName);
+    void deleteAllByIdNotIn(List<Long> fieldIds);
+
+    /**
+     *  根据表id和字段名获取字段信息
+     * @param tableId 表id
+     * @param name 字段名称
+     * @return 符合条件的字段信息
+     */
+    GeneratorField getByTableIdAndName(Long tableId, String name);
 
 }

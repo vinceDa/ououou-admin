@@ -133,6 +133,8 @@ public class MenuServiceImpl implements MenuService {
             log.error("delete menu error: unknown id");
             throw new BadRequestException("请选择菜单删除");
         }
+        // 删除role_menu的绑定关系
+        menuRepository.deleteRoleMenuByMenuId(id);
         menuRepository.deleteById(id);
     }
 

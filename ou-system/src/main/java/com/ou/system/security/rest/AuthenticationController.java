@@ -1,6 +1,11 @@
 package com.ou.system.security.rest;
 
+import com.ou.common.exception.NotLoggedInException;
 import com.ou.common.exception.UnknownRequestException;
+import com.ou.system.security.domain.AuthorizationUser;
+import com.ou.system.security.domain.JwtUser;
+import com.ou.system.security.util.JwtTokenUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,15 +17,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.ou.common.exception.NotLoggedInException;
-import com.ou.system.security.domain.AuthorizationUser;
-import com.ou.system.security.domain.JwtUser;
-import com.ou.system.security.util.JwtTokenUtil;
-
-import lombok.extern.slf4j.Slf4j;
-
-import java.lang.reflect.Method;
 
 /**
  *  授权、根据token获取用户详细信息
@@ -51,21 +47,16 @@ public class AuthenticationController {
      */
     @PostMapping(value = "/login")
     public ResponseEntity login(@Validated @RequestBody AuthorizationUser authorizationUser) {
-
         JwtUser jwtUser = (JwtUser)userDetailsService.loadUserByUsername(authorizationUser.getUsername());
-
         if (!jwtUser.getPassword().equals(authorizationUser.getPassword())) {
             throw new AccountExpiredException("密码错误");
         }
-
         if (!jwtUser.isEnabled()) {
             throw new AccountExpiredException("账号已停用，请联系管理员");
         }
-
         // 生成令牌
         final String token = jwtTokenUtil.generateToken(jwtUser);
         log.info("token isExpired: {}", jwtTokenUtil.isTokenExpired(token));
-
         // 返回 token
         return ResponseEntity.ok(token);
     }

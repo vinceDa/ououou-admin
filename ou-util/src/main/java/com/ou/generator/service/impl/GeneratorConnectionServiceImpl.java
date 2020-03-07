@@ -1,43 +1,40 @@
 package com.ou.generator.service.impl;
 
-import java.sql.*;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-
-import com.ou.generator.domain.GeneratorDatabase;
-import com.ou.generator.domain.GeneratorField;
-import com.ou.generator.domain.GeneratorTable;
-import com.ou.generator.domain.dto.GeneratorDatabaseDTO;
-import com.ou.generator.domain.dto.GeneratorTableDTO;
-import com.ou.generator.domain.vo.GeneratorTableVO;
-import com.ou.generator.repository.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-
-import com.ou.common.exception.BadRequestException;
-import com.ou.generator.domain.GeneratorConnection;
-import com.ou.generator.domain.dto.GeneratorConnectionDTO;
-import com.ou.generator.domain.query.GeneratorConnectionQueryCriteria;
-import com.ou.generator.security.util.SecurityUtil;
-import com.ou.generator.service.GeneratorConnectionService;
-import com.ou.generator.util.ConnectionUtil;
-
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.StrUtil;
+import com.ou.common.exception.BadRequestException;
+import com.ou.generator.domain.GeneratorConnection;
+import com.ou.generator.domain.GeneratorDatabase;
+import com.ou.generator.domain.GeneratorField;
+import com.ou.generator.domain.GeneratorTable;
+import com.ou.generator.domain.dto.GeneratorConnectionDTO;
+import com.ou.generator.domain.query.GeneratorConnectionQueryCriteria;
+import com.ou.generator.domain.vo.GeneratorConnectionVO;
+import com.ou.generator.domain.vo.GeneratorDatabaseVO;
+import com.ou.generator.domain.vo.GeneratorTableVO;
+import com.ou.generator.repository.*;
+import com.ou.generator.security.util.SecurityUtil;
+import com.ou.generator.service.GeneratorConnectionService;
+import com.ou.generator.util.ConnectionUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author vince
@@ -208,6 +205,9 @@ public class GeneratorConnectionServiceImpl implements GeneratorConnectionServic
             deleteAllConnectionInfoById(id);
             PreparedStatement listDatabases = connection.prepareStatement("show databases");
             ResultSet databases = listDatabases.executeQuery();
+            List<Long> databaseIds = new ArrayList<>();
+            List<Long> tableIds = new ArrayList<>();
+            List<Long> fieldIds = new ArrayList<>();
             while (databases.next()) {
                 String database = databases.getString("Database");
                 log.info("database: {}", database);
@@ -215,23 +215,43 @@ public class GeneratorConnectionServiceImpl implements GeneratorConnectionServic
                 if (DEFAULT_DATABASES.contains(database)) {
                     continue;
                 }
-                GeneratorDatabase generatorDatabase = new GeneratorDatabase();
-                generatorDatabase.setName(database);
-                generatorDatabase.setConnectionId(id);
-                GeneratorDatabase databaseResult = updateDatabase(generatorDatabase);
+                GeneratorDatabase byConnectionIdAndAndName = generatorDatabaseRepository.getByConnectionIdAndAndName(id, database);
+                GeneratorDatabase databaseResult;
+                if (byConnectionIdAndAndName == null) {
+                    GeneratorDatabase generatorDatabase = new GeneratorDatabase();
+                    generatorDatabase.setName(database);
+                    generatorDatabase.setConnectionId(id);
+                    databaseResult = updateDatabase(generatorDatabase);
+                } else {
+                    byConnectionIdAndAndName.setName(database);
+                    byConnectionIdAndAndName.setConnectionId(id);
+                    databaseResult = updateDatabase(byConnectionIdAndAndName);
+                }
+                databaseIds.add(databaseResult.getId());
                 String listTablesSql = "select TABLE_NAME name, TABLE_COLLATION collation "
                     + "from information_schema.tables  where table_schema = ?";
                 PreparedStatement listTables = connection.prepareStatement(listTablesSql);
                 listTables.setString(1, database);
                 ResultSet tables = listTables.executeQuery();
                 while (tables.next()) {
-                    GeneratorTable generatorTable = new GeneratorTable();
                     String tableName = tables.getString("name");
-                    generatorTable.setCharset("utf-8");
-                    generatorTable.setName(tableName);
-                    generatorTable.setCollation(tables.getString("collation"));
-                    generatorTable.setDatabaseId(databaseResult.getId());
-                    GeneratorTable tableResult = updateTable(generatorTable);
+                    GeneratorTable tableResult;
+                    GeneratorTable byDatabaseIdAndName = generatorTableRepository.getByDatabaseIdAndName(databaseResult.getId(), tableName);
+                    if (byDatabaseIdAndName == null) {
+                        GeneratorTable generatorTable = new GeneratorTable();
+                        generatorTable.setCharset("utf-8");
+                        generatorTable.setName(tableName);
+                        generatorTable.setCollation(tables.getString("collation"));
+                        generatorTable.setDatabaseId(databaseResult.getId());
+                        tableResult = updateTable(generatorTable);
+                    } else {
+                        byDatabaseIdAndName.setCharset("utf-8");
+                        byDatabaseIdAndName.setName(tableName);
+                        byDatabaseIdAndName.setCollation(tables.getString("collation"));
+                        byDatabaseIdAndName.setDatabaseId(databaseResult.getId());
+                        tableResult = updateTable(byDatabaseIdAndName);
+                    }
+                    tableIds.add(tableResult.getId());
                     String listFieldsSql =
                         "select COLUMN_NAME name, COLUMN_TYPE type, IS_NULLABLE isRequired, COLUMN_COMMENT comment "
                             + "from information_schema.COLUMNS where table_name = ? and table_schema = ?";
@@ -240,16 +260,33 @@ public class GeneratorConnectionServiceImpl implements GeneratorConnectionServic
                     listFields.setString(2, database);
                     ResultSet fields = listFields.executeQuery();
                     while (fields.next()) {
-                        GeneratorField generatorField = new GeneratorField();
-                        generatorField.setTableId(tableResult.getId());
-                        generatorField.setName(fields.getString("name"));
-                        generatorField.setType(fields.getString("type"));
-                        generatorField.setIsRequired(fields.getBoolean("isRequired"));
-                        generatorField.setComment(fields.getString("comment"));
-                        updateGeneratorField(generatorField);
+                        String fieldName = fields.getString("name");
+                        GeneratorField fieldResult;
+                        GeneratorField byTableIdAndName = generatorFieldRepository.getByTableIdAndName(tableResult.getId(), fieldName);
+                        if (byTableIdAndName == null) {
+                            GeneratorField generatorField = new GeneratorField();
+                            generatorField.setTableId(tableResult.getId());
+                            generatorField.setName(fieldName);
+                            generatorField.setType(fields.getString("type"));
+                            generatorField.setIsRequired(fields.getBoolean("isRequired"));
+                            generatorField.setComment(fields.getString("comment"));
+                            fieldResult = updateGeneratorField(generatorField);
+                        } else {
+                            byTableIdAndName.setTableId(tableResult.getId());
+                            byTableIdAndName.setName(fieldName);
+                            byTableIdAndName.setType(fields.getString("type"));
+                            byTableIdAndName.setIsRequired(fields.getBoolean("isRequired"));
+                            byTableIdAndName.setComment(fields.getString("comment"));
+                            fieldResult = updateGeneratorField(byTableIdAndName);
+                        }
+                        fieldIds.add(fieldResult.getId());
                     }
                 }
             }
+            // 执行更新/增加操作后, 对已删除但是数据库中还未删除的数据库/表/字段进行清理, 删除多余的信息
+            generatorDatabaseRepository.deleteAllByIdNotIn(databaseIds);
+            generatorTableRepository.deleteAllByIdNotIn(tableIds);
+            generatorFieldRepository.deleteAllByIdNotIn(fieldIds);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -259,29 +296,35 @@ public class GeneratorConnectionServiceImpl implements GeneratorConnectionServic
     }
 
     @Override
-    public List<GeneratorConnectionDTO> listConnectionInfoTree() {
+    public List<GeneratorConnectionVO> listConnectionInfoTree() {
         Long userId = SecurityUtil.getJwtUserId();
         GeneratorConnectionQueryCriteria param = new GeneratorConnectionQueryCriteria();
         param.setCreateUserId(userId);
         param.setEnable(true);
         List<GeneratorConnectionDTO> generatorConnectionDTOS = this.listAll(param.toSpecification());
-        for (GeneratorConnectionDTO singleConnection : generatorConnectionDTOS) {
+        List<GeneratorConnectionVO> convert = Convert.convert(new TypeReference<List<GeneratorConnectionVO>>() {
+        }, generatorConnectionDTOS);
+        for (GeneratorConnectionVO singleConnection : convert) {
+            singleConnection.setKey("connection" + singleConnection.getId());
+            singleConnection.setTitle(singleConnection.getName());
             List<GeneratorDatabase> databases = generatorDatabaseRepository.findAllByConnectionId(singleConnection.getId());
-            List<GeneratorDatabaseDTO> convert = Convert.convert(new TypeReference<List<GeneratorDatabaseDTO>>() {
+            List<GeneratorDatabaseVO> databaseVOS = Convert.convert(new TypeReference<List<GeneratorDatabaseVO>>() {
             }, databases);
-            singleConnection.setChildren(convert);
-            for (GeneratorDatabaseDTO singleDatabase : convert) {
+            for (GeneratorDatabaseVO singleDatabase : databaseVOS) {
                 List<GeneratorTable> tables = generatorTableRepository.findAllByDatabaseIdIn(Collections.singletonList(singleDatabase.getId()));
                 singleDatabase.setKey("database" + singleDatabase.getId());
-                List<GeneratorTableDTO> tableDTOS = Convert.convert(new TypeReference<List<GeneratorTableDTO>>() {
+                singleDatabase.setTitle(singleDatabase.getName());
+                List<GeneratorTableVO> tableVOS = Convert.convert(new TypeReference<List<GeneratorTableVO>>() {
                 }, tables);
-                for (GeneratorTableDTO tableDTO : tableDTOS) {
-                    tableDTO.setKey("table" + tableDTO.getId());
+                for (GeneratorTableVO tableVO : tableVOS) {
+                    tableVO.setKey("table" + tableVO.getId());
+                    tableVO.setTitle(tableVO.getName());
                 }
-                singleDatabase.setChildren(tableDTOS);
+                singleDatabase.setChildren(tableVOS);
             }
+            singleConnection.setChildren(databaseVOS);
         }
-        return generatorConnectionDTOS;
+        return convert;
     }
 
     /**

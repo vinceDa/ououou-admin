@@ -1,31 +1,30 @@
 package com.ou.generator.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-
-import com.ou.common.exception.BadRequestException;
-import com.ou.generator.domain.GeneratorDatabase;
-import com.ou.generator.domain.dto.GeneratorDatabaseDTO;
-import com.ou.generator.domain.query.GeneratorDatabaseQueryCriteria;
-import com.ou.generator.repository.GeneratorDatabaseRepository;
-import com.ou.generator.security.util.SecurityUtil;
-import com.ou.generator.service.GeneratorDatabaseService;
-
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.StrUtil;
+import com.ou.common.exception.BadRequestException;
+import com.ou.generator.domain.GeneratorDatabase;
+import com.ou.generator.domain.dto.GeneratorDatabaseDTO;
+import com.ou.generator.domain.query.GeneratorDatabaseQueryCriteria;
+import com.ou.generator.repository.GeneratorDatabaseRepository;
+import com.ou.generator.repository.GeneratorTableRepository;
+import com.ou.generator.security.util.SecurityUtil;
+import com.ou.generator.service.GeneratorDatabaseService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author vince
@@ -40,6 +39,9 @@ public class GeneratorDatabaseServiceImpl implements GeneratorDatabaseService {
 
     @Resource
     private GeneratorDatabaseRepository generatorDatabaseRepository;
+
+    @Resource
+    private GeneratorTableRepository generatorTableRepository;
 
     @Override
     public List<GeneratorDatabaseDTO> listAll() {
@@ -110,6 +112,8 @@ public class GeneratorDatabaseServiceImpl implements GeneratorDatabaseService {
             log.error("delete error, unknown id");
             throw new BadRequestException("请选择数据库删除");
         }
+        // 先删除数据库下所有的表
+        generatorTableRepository.deleteAllByDatabaseIdIn(Collections.singletonList(id));
         generatorDatabaseRepository.deleteById(id);
     }
 

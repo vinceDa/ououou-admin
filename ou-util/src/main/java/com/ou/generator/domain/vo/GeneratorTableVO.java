@@ -50,6 +50,11 @@ public class GeneratorTableVO {
     private String key;
 
     /**
+     *  前端使用, 和name值一样
+     */
+    private String title;
+
+    /**
      *  创建时间
      */
     private LocalDateTime createTime;

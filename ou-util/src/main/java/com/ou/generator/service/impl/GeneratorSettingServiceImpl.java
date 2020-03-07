@@ -1,23 +1,20 @@
 package com.ou.generator.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import javax.annotation.Resource;
-
-import org.springframework.stereotype.Service;
-
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.convert.Convert;
 import com.ou.common.exception.BadRequestException;
 import com.ou.generator.domain.GeneratorSetting;
 import com.ou.generator.domain.dto.GeneratorSettingDTO;
 import com.ou.generator.repository.GeneratorSettingRepository;
 import com.ou.generator.security.util.SecurityUtil;
 import com.ou.generator.service.GeneratorSettingService;
-
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
-import cn.hutool.core.convert.Convert;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * @author vince
@@ -82,6 +79,8 @@ public class GeneratorSettingServiceImpl implements GeneratorSettingService {
 
     @Override
     public GeneratorSettingDTO listSettingsByTableId(Long tableId) {
-        return Convert.convert(GeneratorSettingDTO.class, generatorSettingRepository.getByTableId(tableId));
+        GeneratorSetting byTableId = generatorSettingRepository.getByTableId(tableId);
+        log.info("listSettingsByTableId: {}", byTableId);
+        return Convert.convert(GeneratorSettingDTO.class, byTableId);
     }
 }
