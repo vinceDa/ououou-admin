@@ -1,33 +1,29 @@
 package com.ou.quartz.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import javax.annotation.Resource;
-
-import com.ou.common.exception.BadRequestException;
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.lang.TypeReference;
 import com.ou.generator.security.util.SecurityUtil;
+import com.ou.quartz.domain.QuartzTask;
+import com.ou.quartz.domain.dto.QuartzTaskDTO;
+import com.ou.quartz.domain.query.QuartzTaskQueryCriteria;
+import com.ou.quartz.repository.QuartzTaskRepository;
+import com.ou.quartz.service.QuartzTaskService;
 import com.ou.quartz.util.QuartzUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
-import com.ou.quartz.domain.QuartzTask;
-import com.ou.quartz.domain.dto.QuartzTaskDTO;
-import com.ou.quartz.domain.query.QuartzTaskQueryCriteria;
-import com.ou.quartz.repository.QuartzTaskRepository;
-import com.ou.quartz.service.QuartzTaskService;
-
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.lang.TypeReference;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author vince

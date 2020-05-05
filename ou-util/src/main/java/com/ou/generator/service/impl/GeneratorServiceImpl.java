@@ -1,3 +1,4 @@
+/*
 package com.ou.generator.service.impl;
 
 import cn.hutool.core.convert.Convert;
@@ -5,7 +6,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
-import com.ou.common.exception.BadRequestException;
 import com.ou.generator.config.FreemarkerInfoConfig;
 import com.ou.generator.domain.*;
 import com.ou.generator.domain.vo.GeneratorFieldVO;
@@ -23,10 +23,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+*/
 /**
  * @author vince
  * @date 2019/12/30 20:13
- */
+ *//*
+
 @Slf4j
 @Service
 public class GeneratorServiceImpl implements GeneratorService {
@@ -64,9 +66,11 @@ public class GeneratorServiceImpl implements GeneratorService {
             setting.setAuthor("vince");
             setting.setPackageName("com.ou.quartz");
             setting.setInterfaceName("quartz");
-            /*if (setting == null) {
+            */
+/*if (setting == null) {
                 throw new BadRequestException("请先配置表信息");
-            }*/
+            }*//*
+
             log.info("setting: {}", setting.toString());
             generateCodeByFreemarker(table, setting, fieldVOS, projectName, rootDir);
         }
@@ -75,14 +79,16 @@ public class GeneratorServiceImpl implements GeneratorService {
         return rootDir;
     }
 
-    /**
+    */
+/**
      *  根据模板生成代码
      * @param table 表信息
      * @param setting 配置信息
      * @param fields 字段信息
      * @param projectName 工程名, 为空则表示不生成项目结构
      * @param rootDir 文件所属目录
-     */
+     *//*
+
     private void generateCodeByFreemarker(GeneratorTable table, GeneratorSetting setting,
                                           List<GeneratorFieldVO> fields, String projectName, String rootDir) {
         boolean generateWithProject = StrUtil.isNotBlank(projectName);
@@ -99,7 +105,7 @@ public class GeneratorServiceImpl implements GeneratorService {
         Writer out = null;
         try {
             // step2 获取模版路径
-            String freemarkerPath = ResourceUtils.getURL("classpath:freemarker/").getPath();
+            String freemarkerPath = ResourceUtils.getURL("classpath:freemarker/ou-admin/").getPath();
             configuration.setDirectoryForTemplateLoading(new File(freemarkerPath));
             // step3 创建数据模型
             FreemarkerInfoConfig config = new FreemarkerInfoConfig();
@@ -177,13 +183,15 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     }
 
-    /**
+    */
+/**
      * 根据数据库类型获取包装类型
      * 
      * @param type
      *            数据库类型
      * @return 包装类型
-     */
+     *//*
+
     private String getPackagingTypeByDbType(String type) {
         String packingType;
         if (type.contains("bigint")) {
@@ -200,10 +208,12 @@ public class GeneratorServiceImpl implements GeneratorService {
         return packingType;
     }
 
-    /**
+    */
+/**
      *  根据路径生成所有的文件夹
      * @param path  路径
-     */
+     *//*
+
     private void mkdirs(String path) {
         if (!FileUtil.exist(path)) {
             File mkdir = FileUtil.mkdir(path);
@@ -214,7 +224,8 @@ public class GeneratorServiceImpl implements GeneratorService {
     }
 
 
-    /**
+    */
+/**
      * 下划线命名转驼峰 xx_yy -> XxYy /xxYy
      *
      * @param name
@@ -222,7 +233,8 @@ public class GeneratorServiceImpl implements GeneratorService {
      * @param isUpperCamelCase
      *            是否转为大驼峰, 否则为小驼峰
      * @return 转换后的值
-     */
+     *//*
+
     private String nameToHump(String name, Boolean isUpperCamelCase) {
         StringBuilder entityName = new StringBuilder();
         String[] strings = name.split("_");
@@ -234,16 +246,19 @@ public class GeneratorServiceImpl implements GeneratorService {
         return entityName.toString();
     }
 
-    /**
+    */
+/**
      * 首字母大写
      *
      * @param name
      *            原值
      * @return 转换后的值
-     */
+     *//*
+
     private String captureName(String name) {
         char[] cs = name.toCharArray();
         cs[0] -= 32;
         return String.valueOf(cs);
     }
 }
+*/

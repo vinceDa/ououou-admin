@@ -1,17 +1,16 @@
 package com.ou.generator.config;
 
-import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import org.springframework.util.ResourceUtils;
-
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.TypeReference;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
+import org.springframework.util.ResourceUtils;
+
+import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
  * @author vince
@@ -48,7 +47,7 @@ public class FreemarkerInfoConfig {
     public List<FreemarkerInfoConfig> init() {
         List<FreemarkerInfoConfig> res = null;
         try {
-            String path = ResourceUtils.getURL("classpath:freemarker/Config.json").getPath();
+            String path = ResourceUtils.getURL("classpath:freemarker/ou-admin/Config.json").getPath();
             String fileContent = FileUtil.readString(path, StandardCharsets.UTF_8);
             JSONObject json = JSONObject.parseObject(fileContent);
             JSONArray jsonArray = json.getJSONArray("config");

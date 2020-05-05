@@ -1,68 +1,76 @@
-package ${package}.rest;
+package ${package}.controller;
 
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-
+import com.csii.common.result.BaseResult;
+import com.csii.common.result.FailureResult;
+import com.csii.common.result.SuccessResult;
+import ${package}.entity.${entityName};
+import ${package}.entity.query.${entityName}QueryCriteria;
+import ${package}.service.${entityName}Service;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import ${package}.domain.dto.${entityName}DTO;
-import ${package}.domain.query.${entityName}QueryCriteria;
-import ${package}.domain.vo.${entityName}VO;
-import ${package}.service.${entityName}Service;
-
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.lang.TypeReference;
-import lombok.extern.slf4j.Slf4j;
+import javax.validation.constraints.NotNull;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
  * @author ${author}
  * @date ${date}
  */
-@Slf4j
-@Controller
-@RequestMapping("/api")
+@RestController
+@RequestMapping("/api/v1")
 public class ${entityName}Controller {
 
     @Autowired
     private ${entityName}Service ${entityName?uncap_first}Service;
 
-    @GetMapping(value = "/${entityName?uncap_first}s")
-    public ResponseEntity listAll(HttpServletRequest request, ${entityName}QueryCriteria ${entityName?uncap_first}QueryCriteria) {
-        List<${entityName}DTO> ${entityName?uncap_first}DTOS;
-        if (BeanUtil.isEmpty(${entityName?uncap_first}QueryCriteria)) {
-            ${entityName?uncap_first}DTOS = ${entityName?uncap_first}Service.listAll();
-        } else {
-            ${entityName?uncap_first}DTOS = ${entityName?uncap_first}Service.listAll(${entityName?uncap_first}QueryCriteria.toSpecification());
-        }
-        List<${entityName}VO> convert = Convert.convert(new TypeReference<List<${entityName}VO>>() {
-        }, ${entityName?uncap_first}DTOS);
-        return ResponseEntity.ok(convert);
+    @GetMapping(value = "/${entityName?uncap_first}s/page")
+    public BaseResult listForPage(${entityName}QueryCriteria queryCriteria) {
+        PageHelper.startPage(queryCriteria.getPageNum(), queryCriteria.getPageSize());
+        List<${entityName}> list = ${entityName?uncap_first}Service.listForPage(queryCriteria);
+        PageInfo<${entityName}> pageInfo = new PageInfo<>(list);
+        Map<String, Object> result = new HashMap<>(3);
+        result.put("totalCount", pageInfo.getTotal());
+        result.put("pageNum", pageInfo.getPageNum());
+        result.put("list", list);
+        return new SuccessResult(result);
+    }
+
+    @GetMapping(value = "/${entityName?uncap_first}s/{id}")
+    public BaseResult getById(@NotNull @PathVariable String id) {
+        return new SuccessResult(${entityName?uncap_first}Service.selectByPrimaryKey(id));
     }
 
     @PostMapping(value = "/${entityName?uncap_first}s")
-    public ResponseEntity insert(HttpServletRequest request, @Validated(${entityName}DTO.Insert.class) @RequestBody ${entityName}DTO ${entityName?uncap_first}DTO) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(${entityName?uncap_first}Service.insert(${entityName?uncap_first}DTO));
+    public BaseResult insert(@Validated(${entityName}.Insert.class) @RequestBody ${entityName} ${entityName?uncap_first}) {
+        int resultCount = ${entityName?uncap_first}Service.insertSelective(${entityName?uncap_first});
+        if (resultCount == 1) {
+            return new SuccessResult();
+        }
+        return new FailureResult();
     }
 
     @PutMapping(value = "/${entityName?uncap_first}s")
-    public ResponseEntity put(HttpServletRequest request, @Validated(${entityName}DTO.Update.class) @RequestBody ${entityName}DTO ${entityName?uncap_first}DTO) {
-        ${entityName?uncap_first}Service.update(${entityName?uncap_first}DTO);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    public BaseResult put(@Validated(${entityName}.Update.class) @RequestBody ${entityName} ${entityName?uncap_first}) {
+        int resultCount = ${entityName?uncap_first}Service.updateByPrimaryKeySelective(${entityName?uncap_first});
+        if (resultCount == 1) {
+            return new SuccessResult();
+        }
+        return new FailureResult();
     }
 
     @DeleteMapping(value = "/${entityName?uncap_first}s/{id}")
-    public ResponseEntity delete(@NotNull @PathVariable Long id) {
-        ${entityName?uncap_first}Service.delete(id);
-        return new ResponseEntity(HttpStatus.OK);
+    public BaseResult delete(@NotNull @PathVariable String id) {
+        int resultCount = ${entityName?uncap_first}Service.deleteByPrimaryKey(id);
+        if (resultCount == 1) {
+            return new SuccessResult();
+        }
+        return new FailureResult();
     }
 
 }

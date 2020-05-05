@@ -66,8 +66,8 @@ public class AuthenticationController {
      * 
      * @return
      */
-    @GetMapping(value = "/getUserInfo")
-    public ResponseEntity getUserInfo() {
+    @GetMapping(value = "/getCurrentUser")
+    public ResponseEntity getCurrentUser() {
         UserDetails userDetails = (UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         JwtUser jwtUser = (JwtUser)userDetailsService.loadUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(jwtUser);

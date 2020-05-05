@@ -2,7 +2,6 @@ package com.ou.system.security.util;
 
 import com.ou.common.exception.NotLoggedInException;
 import com.ou.system.security.domain.JwtUser;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**

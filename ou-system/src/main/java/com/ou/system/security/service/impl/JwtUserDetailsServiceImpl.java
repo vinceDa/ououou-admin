@@ -1,11 +1,10 @@
 package com.ou.system.security.service.impl;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
+import cn.hutool.core.util.StrUtil;
+import com.ou.common.exception.BadRequestException;
+import com.ou.system.domain.User;
+import com.ou.system.repository.UserRepository;
+import com.ou.system.security.domain.JwtUser;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,14 +12,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.ou.common.exception.BadRequestException;
-import com.ou.system.domain.Role;
-import com.ou.system.domain.User;
-import com.ou.system.repository.RoleRepository;
-import com.ou.system.repository.UserRepository;
-import com.ou.system.security.domain.JwtUser;
-
-import cn.hutool.core.util.StrUtil;
+import javax.annotation.Resource;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * @author vince

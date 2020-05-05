@@ -18,8 +18,8 @@ public class ConnectionUtil {
 
     public static Connection getMysqlConnection(GeneratorConnection generatorConnection) {
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://" + generatorConnection.getHost() + ":" + generatorConnection.getPort();
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            String url = "jdbc:mysql://" + generatorConnection.getHost() + ":" + generatorConnection.getPort() + "?serverTimezone=CST";
             return DriverManager.getConnection(url, generatorConnection.getUsername(),
                 generatorConnection.getPassword());
         } catch (ClassNotFoundException e) {

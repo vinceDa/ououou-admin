@@ -3,21 +3,19 @@ package com.ou.generator.service.impl;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.TypeReference;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
-import com.ou.generator.config.FreemarkerInfoConfig;
-import com.ou.generator.domain.*;
-import com.ou.generator.domain.vo.GeneratorFieldVO;
-import com.ou.generator.repository.*;
-import com.ou.generator.service.GeneratorService;
+import com.ou.common.exception.BadRequestException;
+import com.ou.generator.domain.GeneratorSetting;
+import com.ou.generator.domain.GeneratorTableInfo;
+import com.ou.generator.service.AutoGeneratorService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
-import javax.annotation.Resource;
 import java.io.*;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -28,46 +26,19 @@ import java.util.*;
  */
 @Slf4j
 @Service
-public class GeneratorServiceImpl implements GeneratorService {
-
-    @Resource
-    private GeneratorConnectionRepository generatorConnectionRepository;
-
-    @Resource
-    private GeneratorDatabaseRepository generatorDatabaseRepository;
-
-    @Resource
-    private GeneratorTableRepository generatorTableRepository;
-
-    @Resource
-    private GeneratorFieldRepository generatorFieldRepository;
-
-    @Resource
-    private GeneratorSettingRepository generatorSettingRepository;
+public class AutoGeneratorServiceImpl implements AutoGeneratorService {
 
     @Override
-    public String generateCode(List<Long> tableIds, String projectName) {
+    public String generateCode(List<String> tables, GeneratorSetting setting) {
         String uuid = UUID.randomUUID().toString().replace("-", "");
         String rootDir = File.separator + "template" + File.separator + uuid + File.separator;
-        for (Long tableId : tableIds) {
-            GeneratorTable table = generatorTableRepository.getOne(tableId);
-            List<GeneratorField> fields = generatorFieldRepository.findAllByTableId(tableId);
-            List<GeneratorFieldVO> fieldVOS = Convert.convert(new TypeReference<List<GeneratorFieldVO>>() {}, fields);
-            for (GeneratorFieldVO single : fieldVOS) {
-                single.setHumpName(nameToHump(single.getName(), false));
-                String type = single.getType();
-                single.setPackagingType(getPackagingTypeByDbType(type));
+        for (String tableName : tables) {
+            List<GeneratorTableInfo> tableInfos = listTableInfos(tableName);
+            for (GeneratorTableInfo single : tableInfos) {
+                single.setColumnHumpName(nameToHump(single.getColumnName(), false));
+                single.setJavaDataType(getPackagingTypeByDbType(single.getDataType()));
             }
-            GeneratorSetting setting = new GeneratorSetting();
-            // setting = generatorSettingRepository.getByTableId(tableId);
-            setting.setAuthor("vince");
-            setting.setPackageName("com.ou.quartz");
-            setting.setInterfaceName("quartz");
-            /*if (setting == null) {
-                throw new BadRequestException("请先配置表信息");
-            }*/
-            log.info("setting: {}", setting.toString());
-            generateCodeByFreemarker(table, setting, fieldVOS, projectName, rootDir);
+            generateCodeByFreemarker(tableName, setting, tableInfos,  rootDir);
         }
         File zip = ZipUtil.zip(rootDir);
         log.info("zip result: {}", zip.exists());
@@ -76,88 +47,57 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     /**
      *  根据模板生成代码
-     * @param table 表信息
+     * @param tableName 表名
      * @param setting 配置信息
-     * @param fields 字段信息
-     * @param projectName 工程名, 为空则表示不生成项目结构
+     * @param tableInfos 表信息(字段名, 字段类型...)
      * @param rootDir 文件所属目录
      */
-    private void generateCodeByFreemarker(GeneratorTable table, GeneratorSetting setting,
-                                          List<GeneratorFieldVO> fields, String projectName, String rootDir) {
-        boolean generateWithProject = StrUtil.isNotBlank(projectName);
+    private void generateCodeByFreemarker(String tableName, GeneratorSetting setting,
+                                          List<GeneratorTableInfo> tableInfos, String rootDir) {
         LocalDateTime date = LocalDateTime.now();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd hh:mm:ss");
         String dateFormat = date.format(dateTimeFormatter);
-        String tableName = table.getName();
-        // 实体类英文名根据表名小驼峰命名
+        // 实体类英文名根据表名大驼峰命名
         String entityName = nameToHump(tableName, true);
         // 实体类中文名设置为前端可配置, 用于接口的描述信息, 将来可用于swagger文档的接口描述
-        // fields
+        // tableInfos
         // step1 创建freeMarker配置实例
         Configuration configuration = new Configuration(Configuration.VERSION_2_3_29);
         Writer out = null;
         try {
             // step2 获取模版路径
-            String freemarkerPath = ResourceUtils.getURL("classpath:freemarker/ou-admin/").getPath();
+            String freemarkerPath = ResourceUtils.getURL("classpath:freemarker/meteorite/").getPath();
             configuration.setDirectoryForTemplateLoading(new File(freemarkerPath));
             // step3 创建数据模型
-            FreemarkerInfoConfig config = new FreemarkerInfoConfig();
-            List<FreemarkerInfoConfig> configs = config.init();
             Map<String, Object> dataMap = new HashMap<>(7);
             String packageName = setting.getPackageName();
-            dataMap.put("fields", fields);
+            dataMap.put("tableInfos", tableInfos);
             dataMap.put("author", setting.getAuthor());
             dataMap.put("date", dateFormat);
             dataMap.put("package", packageName);
-            dataMap.put("project", projectName);
             dataMap.put("tableName", tableName);
             dataMap.put("entityName", entityName);
-            dataMap.put("entityChineseName", "entityChineseName");
-
-            for (FreemarkerInfoConfig single : configs) {
-                boolean isApplicationFtl = "Application.ftl".equals(single.getTemplateName());
-                if (generateWithProject && isApplicationFtl) {
-                    GeneratorDatabase database = generatorDatabaseRepository.getOne(table.getDatabaseId());
-                    GeneratorConnection connection = generatorConnectionRepository.getOne(database.getConnectionId());
-                    // 获取数据库连接的数据, 用于生成application.properties
-                    String dbUrl = "jdbc:mysql://" + connection.getHost() + ":" + connection.getPort()
-                            + "/" + database.getName() + "?serverTimezone=Asia/Shanghai&characterEncoding=utf8&useSSL=false";
-                    String dbUsername = connection.getUsername();
-                    String dbPassword = connection.getPassword();
-                    dataMap.put("dbUrl", dbUrl);
-                    dataMap.put("dbUsername", dbUsername);
-                    dataMap.put("dbPassword", dbPassword);
-                }
-                if (!generateWithProject && single.getDependOnProject()) {
-                    continue;
-                }
-                String templateName = single.getTemplateName();
+            File templateDir = new File(freemarkerPath);
+            File[] templates = templateDir.listFiles();
+            if (templates == null) {
+                throw new BadRequestException("error template dir path");
+            }
+            for (File singleFile : templates) {
+                String templateName = singleFile.getName();
+                String suffix = templateName.split("\\.")[0];
                 // step4 加载模版文件
-                String filename = single.getFilename();
                 // 当前文件的所属绝对路径
-                String absolutePath = single.getPackageName();
+                String packagePath = packageName.endsWith("\\.") ? packageName : packageName + ".";
+                String absolutePath = rootDir + "src.main.java." + packagePath + upperCamelCaseToPath(suffix);
+                suffix = suffix.equalsIgnoreCase("Entity") ? "" : suffix;
+                String filename = entityName + suffix + ".java";
                 Template template = configuration.getTemplate(templateName);
-                if (filename.contains("projectName")) {
-                    filename = filename.replace("projectName", captureName(projectName));
-                } else {
-                    filename = filename.replace("prefix", entityName);
-                }
                 // step5 生成数据
-                if (generateWithProject) {
-                    absolutePath = absolutePath.replace("projectName", projectName);
-                } else {
-                    absolutePath = absolutePath.replace("projectName.src.main.java.", "");
-                }
-                absolutePath = rootDir + absolutePath.replace("packageName", packageName);
                 String outputPath = absolutePath.replace(".", File.separator);
                 File mkdir = FileUtil.mkdir(outputPath);
                 log.info("mkdir path: {}, mkdir exist: {}", mkdir.getPath(), mkdir.exists());
                 outputPath = outputPath + File.separator + filename;
                 File docFile = new File(outputPath);
-                // pom / properties 写入一次即可
-                if (docFile.exists() && !single.getIsOverride()) {
-                    continue;
-                }
                 out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
                 // step6 输出文件
                 template.process(dataMap, out);
@@ -174,6 +114,36 @@ public class GeneratorServiceImpl implements GeneratorService {
             }
         }
 
+    }
+
+    private List<GeneratorTableInfo> listTableInfos(String tableName) {
+        List<GeneratorTableInfo> tableInfos = null;
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            // useOldAliasMetadataBehavior=true 使得别名生效
+            String url = "jdbc:mysql://localhost:3306/meteorite?serverTimezone=Asia/Shanghai&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&useOldAliasMetadataBehavior=true";
+            Connection connection = DriverManager.getConnection(url, "root", "123456");
+            List<Map<String, Object>> result = new ArrayList<>();
+            String listTablesSql = "select COLUMN_NAME columnName, IS_NULLABLE isNullable, DATA_TYPE dataType,COLUMN_COMMENT columnComment " +
+                    "from information_schema.columns where table_name = ?";
+            PreparedStatement listTables = connection.prepareStatement(listTablesSql);
+            listTables.setString(1, tableName);
+            ResultSet resultSet = listTables.executeQuery();
+            ResultSetMetaData md = resultSet.getMetaData();//获取键名
+            int columnCount = md.getColumnCount();//获取行的数量
+            while (resultSet.next()) {
+                Map<String, Object> rowData = new HashMap<>();//声明Map
+                for (int i = 1; i <= columnCount; i++) {
+                    // 获取键名及值
+                    rowData.put(md.getColumnName(i), resultSet.getObject(i));
+                }
+                result.add(rowData);
+            }
+            tableInfos = Convert.convert(new TypeReference<List<GeneratorTableInfo>>() {}, result);
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return tableInfos;
     }
 
     /**
@@ -197,6 +167,24 @@ public class GeneratorServiceImpl implements GeneratorService {
             packingType = "Integer";
         }
         return packingType;
+    }
+
+    /**
+     *  大驼峰转路径, 用于将使用DaoImpl.ftl生成的文件至于dao.impl的目录下
+     */
+    private String upperCamelCaseToPath(String origin) {
+        List<Integer> upperCameCaseIndexList = new ArrayList<>();
+        char[] chars = origin.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            if (Character.isUpperCase(chars[i]) && i != 0) {
+                upperCameCaseIndexList.add(i);
+            }
+        }
+        StringBuilder sb = new StringBuilder(origin.toLowerCase());
+        for (Integer index : upperCameCaseIndexList) {
+            sb.insert(index, ".");
+        }
+        return sb.toString();
     }
 
     /**

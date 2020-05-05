@@ -2,7 +2,6 @@ package com.ou.generator.rest.feign;
 
 import com.ou.common.domain.system.User;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 

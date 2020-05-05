@@ -4,37 +4,27 @@
     {
       "templateName": "Controller.ftl",
       "packageName": "src.main.java.packageName.rest",
-      "filename": "prefixController.java",
-      "dependOnProject": false,
-      "isOverride": true
+      "filename": "prefixController.java"
     },
     {
       "templateName": "Service.ftl",
       "packageName": "src.main.java.packageName.service",
-      "filename": "prefixService.java",
-      "dependOnProject": false,
-      "isOverride": true
+      "filename": "prefixService.java"
     },
     {
       "templateName": "ServiceImpl.ftl",
       "packageName": "src.main.java.packageName.service.impl",
-      "filename": "prefixServiceImpl.java",
-      "dependOnProject": false,
-      "isOverride": true
+      "filename": "prefixServiceImpl.java"
     },
     {
       "templateName": "Entity.ftl",
       "packageName": "src.main.java.packageName.entity",
-      "filename": "prefix.java",
-      "dependOnProject": false,
-      "isOverride": true
+      "filename": "prefix.java"
     },
     {
       "templateName": "Repository.ftl",
       "packageName": "src.main.java.packageName.repository",
-      "filename": "prefixRepository.java",
-      "dependOnProject": false,
-      "isOverride": true
+      "filename": "prefixRepository.java"
     }
   ]
 }

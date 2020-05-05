@@ -1,10 +1,8 @@
 package com.ou.gateway.filter;
 
-import java.util.List;
-import java.util.function.Consumer;
-
 import cn.hutool.core.util.StrUtil;
 import com.ou.gateway.util.RedisUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -13,9 +11,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-
-import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+
+import java.util.function.Consumer;
 
 /**
  * @author vince
@@ -35,6 +33,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest().mutate()
                 .headers(httpHeaders -> httpHeaders.remove("secretKey"))
                 .build();
+        log.info("request url: {}", request.getURI());
         HttpHeaders headers = exchange.getRequest().getHeaders();
         String authorization = headers.getFirst("Authorization");
         Consumer<HttpHeaders> httpHeaders = header -> {
