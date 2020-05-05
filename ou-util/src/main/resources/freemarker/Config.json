@@ -3,115 +3,38 @@
   [
     {
       "templateName": "Controller.ftl",
-      "packageName": "projectName.src.main.java.packageName.rest",
+      "packageName": "src.main.java.packageName.rest",
       "filename": "prefixController.java",
       "dependOnProject": false,
       "isOverride": true
     },
     {
       "templateName": "Service.ftl",
-      "packageName": "projectName.src.main.java.packageName.service",
+      "packageName": "src.main.java.packageName.service",
       "filename": "prefixService.java",
       "dependOnProject": false,
       "isOverride": true
     },
     {
       "templateName": "ServiceImpl.ftl",
-      "packageName": "projectName.src.main.java.packageName.service.impl",
+      "packageName": "src.main.java.packageName.service.impl",
       "filename": "prefixServiceImpl.java",
       "dependOnProject": false,
       "isOverride": true
     },
     {
       "templateName": "Entity.ftl",
-      "packageName": "projectName.src.main.java.packageName.domain",
+      "packageName": "src.main.java.packageName.entity",
       "filename": "prefix.java",
       "dependOnProject": false,
       "isOverride": true
     },
     {
-      "templateName": "DTO.ftl",
-      "packageName": "projectName.src.main.java.packageName.domain.dto",
-      "filename": "prefixDTO.java",
-      "dependOnProject": false,
-      "isOverride": true
-    },
-    {
-      "templateName": "VO.ftl",
-      "packageName": "projectName.src.main.java.packageName.domain.vo",
-      "filename": "prefixVO.java",
-      "dependOnProject": false,
-      "isOverride": true
-    },
-    {
-      "templateName": "QueryCriteria.ftl",
-      "packageName": "projectName.src.main.java.packageName.domain.query",
-      "filename": "prefixQueryCriteria.java",
-      "dependOnProject": false,
-      "isOverride": true
-    },
-    {
       "templateName": "Repository.ftl",
-      "packageName": "projectName.src.main.java.packageName.repository",
+      "packageName": "src.main.java.packageName.repository",
       "filename": "prefixRepository.java",
       "dependOnProject": false,
       "isOverride": true
-    },
-    {
-      "templateName": "Pom.ftl",
-      "packageName": "projectName",
-      "filename": "pom.xml",
-      "dependOnProject": true,
-      "isOverride": false
-    },
-    {
-      "templateName": "Application.ftl",
-      "packageName": "projectName.src.main.resources",
-      "filename": "application.properties",
-      "dependOnProject": true,
-      "isOverride": false
-    },
-    {
-      "templateName": "BaseDO.ftl",
-      "packageName": "projectName.src.main.java.packageName.common.base",
-      "filename": "BaseDO.java",
-      "dependOnProject": true,
-      "isOverride": false
-    },
-    {
-      "templateName": "BaseQuery.ftl",
-      "packageName": "projectName.src.main.java.packageName.common.base",
-      "filename": "BaseQuery.java",
-      "dependOnProject": true,
-      "isOverride": false
-    },
-    {
-      "templateName": "ConnectConditionEnum.ftl",
-      "packageName": "projectName.src.main.java.packageName.common.constant.sql",
-      "filename": "ConnectConditionEnum.java",
-      "dependOnProject": true,
-      "isOverride": false
-    },
-    {
-      "templateName": "OperationTypeEnum.ftl",
-      "packageName": "projectName.src.main.java.packageName.common.constant",
-      "filename": "OperationTypeEnum.java",
-      "dependOnProject": true,
-      "isOverride": false
-    },
-    {
-      "templateName": "QueryField.ftl",
-      "packageName": "projectName.src.main.java.packageName.common.retention",
-      "filename": "QueryField.java",
-      "dependOnProject": true,
-      "isOverride": false
-    },
-    {
-      "templateName": "Main.ftl",
-      "packageName": "projectName.src.main.java.packageName",
-      "filename": "projectNameApplication.java",
-      "dependOnProject": true,
-      "isOverride": false
     }
   ]
 }
