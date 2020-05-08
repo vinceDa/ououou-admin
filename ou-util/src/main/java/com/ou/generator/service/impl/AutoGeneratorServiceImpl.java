@@ -4,17 +4,28 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.ZipUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.ou.common.exception.BadRequestException;
+import com.ou.generator.domain.GeneratorConfig;
+import com.ou.generator.domain.GeneratorContent;
 import com.ou.generator.domain.GeneratorSetting;
 import com.ou.generator.domain.GeneratorTableInfo;
 import com.ou.generator.service.AutoGeneratorService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,17 +43,37 @@ public class AutoGeneratorServiceImpl implements AutoGeneratorService {
     public String generateCode(List<String> tables, GeneratorSetting setting) {
         String uuid = UUID.randomUUID().toString().replace("-", "");
         String rootDir = File.separator + "template" + File.separator + uuid + File.separator;
-        for (String tableName : tables) {
-            List<GeneratorTableInfo> tableInfos = listTableInfos(tableName);
-            for (GeneratorTableInfo single : tableInfos) {
-                single.setColumnHumpName(nameToHump(single.getColumnName(), false));
-                single.setJavaDataType(getPackagingTypeByDbType(single.getDataType()));
+        try {
+            // 解析配置文件
+            String configPath = "http://47.106.148.107/config/Config.json";
+            // 创建url对象
+            URL urlObj = new URL(configPath);
+            // 创建HttpURLConnection对象，通过这个对象打开跟远程服务器之间的连接
+            HttpURLConnection httpConn = (HttpURLConnection) urlObj.openConnection();
+            httpConn.setDoInput(true);
+            httpConn.setRequestMethod("GET");
+            httpConn.setConnectTimeout(5000);
+            // 服务器有响应后，会将访问的url页面中的内容放进inputStream中，使用httpConn就可以获取到这个字节流
+            InputStream inStream = httpConn.getInputStream();
+            byte[] bytes = new byte[inStream.available()];
+            inStream.read(bytes);
+            String jsonContent = new String(bytes);
+            GeneratorConfig config = Convert.convert(GeneratorConfig.class, JSONUtil.parseObj(jsonContent));
+            for (String tableName : tables) {
+                List<GeneratorTableInfo> tableInfos = listTableInfos(tableName);
+                for (GeneratorTableInfo single : tableInfos) {
+                    single.setColumnHumpName(nameToHump(single.getColumnName(), false));
+                    single.setJavaDataType(getPackagingTypeByDbType(single.getDataType()));
+                }
+                generateCodeByFreemarker(config,tableName, setting, tableInfos,  rootDir);
             }
-            generateCodeByFreemarker(tableName, setting, tableInfos,  rootDir);
+            File zip = ZipUtil.zip(rootDir);
+            log.info("zip result: {}", zip.exists());
+            return rootDir;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        File zip = ZipUtil.zip(rootDir);
-        log.info("zip result: {}", zip.exists());
-        return rootDir;
+        return null;
     }
 
     /**
@@ -52,7 +83,7 @@ public class AutoGeneratorServiceImpl implements AutoGeneratorService {
      * @param tableInfos 表信息(字段名, 字段类型...)
      * @param rootDir 文件所属目录
      */
-    private void generateCodeByFreemarker(String tableName, GeneratorSetting setting,
+    private void generateCodeByFreemarker(GeneratorConfig config, String tableName, GeneratorSetting setting,
                                           List<GeneratorTableInfo> tableInfos, String rootDir) {
         LocalDateTime date = LocalDateTime.now();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd hh:mm:ss");
@@ -65,10 +96,11 @@ public class AutoGeneratorServiceImpl implements AutoGeneratorService {
         Configuration configuration = new Configuration(Configuration.VERSION_2_3_29);
         Writer out = null;
         try {
-            // step2 获取模版路径
-            String freemarkerPath = ResourceUtils.getURL("classpath:freemarker/meteorite/").getPath();
+            String remoteFreemarkerPath = config.getFreemarkerPath();
+            // 获取模版路径
+            String freemarkerPath = ResourceUtils.getURL("classpath:" + remoteFreemarkerPath).getPath();
             configuration.setDirectoryForTemplateLoading(new File(freemarkerPath));
-            // step3 创建数据模型
+            // 创建数据模型
             Map<String, Object> dataMap = new HashMap<>(7);
             String packageName = setting.getPackageName();
             dataMap.put("tableInfos", tableInfos);
@@ -78,20 +110,21 @@ public class AutoGeneratorServiceImpl implements AutoGeneratorService {
             dataMap.put("tableName", tableName);
             dataMap.put("entityName", entityName);
             File templateDir = new File(freemarkerPath);
-            File[] templates = templateDir.listFiles();
-            if (templates == null) {
-                throw new BadRequestException("error template dir path");
-            }
-            for (File singleFile : templates) {
-                String templateName = singleFile.getName();
-                String suffix = templateName.split("\\.")[0];
+            List<GeneratorContent> content = config.getContent();
+            String packagePrefix = config.getPackagePrefix();
+            packagePrefix = completeFormat(packagePrefix);
+            for (GeneratorContent singleContent : content) {
+                String suffix = singleContent.getSuffix();
                 // step4 加载模版文件
+                String singleContentPackageName = singleContent.getPackageName();
+                String fileType = singleContent.getFileType();
+                String packagePath = completeFormat(packageName);
                 // 当前文件的所属绝对路径
-                String packagePath = packageName.endsWith("\\.") ? packageName : packageName + ".";
-                String absolutePath = rootDir + "src.main.java." + packagePath + upperCamelCaseToPath(suffix);
-                suffix = suffix.equalsIgnoreCase("Entity") ? "" : suffix;
-                String filename = entityName + suffix + ".java";
-                Template template = configuration.getTemplate(templateName);
+                String absolutePath = rootDir + packagePrefix + packagePath + singleContentPackageName;
+                String filename = entityName + suffix + "." + fileType;
+                String templatePath = freemarkerPath + singleContent.getTemplateName();
+                log.info("templatePath: {}", templatePath);
+                Template template = configuration.getTemplate(singleContent.getTemplateName());
                 // step5 生成数据
                 String outputPath = absolutePath.replace(".", File.separator);
                 File mkdir = FileUtil.mkdir(outputPath);
@@ -101,6 +134,10 @@ public class AutoGeneratorServiceImpl implements AutoGeneratorService {
                 out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
                 // step6 输出文件
                 template.process(dataMap, out);
+            }
+            File[] templates = templateDir.listFiles();
+            if (templates == null) {
+                throw new BadRequestException("error template dir path");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -114,6 +151,14 @@ public class AutoGeneratorServiceImpl implements AutoGeneratorService {
             }
         }
 
+    }
+
+    /**
+     *  将传入的字符串补全为所需的格式，此处为保证末尾有 "."
+     */
+    private String completeFormat(String target) {
+        target = target.endsWith("\\.") ? target : target + "\\.";
+        return target;
     }
 
     private List<GeneratorTableInfo> listTableInfos(String tableName) {

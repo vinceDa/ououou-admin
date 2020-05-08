@@ -1,6 +1,6 @@
 package freemarker.meteorite;
 
-{package}.mapper;
+${package}.mapper;
 
 import ${package}.entity.${entityName};
 import ${package}.entity.query.${entityName}QueryCriteria;

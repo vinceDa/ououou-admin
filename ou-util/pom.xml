@@ -13,10 +13,10 @@
     <description>系统工具</description>
 
     <dependencies>
-        <!--<dependency>
+        <dependency>
             <groupId>com.ou</groupId>
             <artifactId>ou-common</artifactId>
-        </dependency>-->
+        </dependency>
 
         <dependency>
             <groupId>com.alibaba.nacos</groupId>

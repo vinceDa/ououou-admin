@@ -1,0 +1,62 @@
+{
+  "freemarkerPath": "freemarker/meteorite/",
+  "packagePrefix": "src.main.java",
+  "content":
+  [
+    {
+      "templateName": "Controller",
+      "packageName": "controller",
+      "suffix": "Controller",
+      "fileType": "java"
+    },
+    {
+      "templateName": "Service",
+      "packageName": "service",
+      "suffix": "Service",
+      "fileType": "java"
+    },
+    {
+      "templateName": "ServiceImpl",
+      "packageName": "service.impl",
+      "suffix": "ServiceImpl",
+      "fileType": "java"
+    },
+    {
+      "templateName": "Dao",
+      "packageName": "dao",
+      "suffix": "Dao",
+      "fileType": "java"
+    },
+    {
+      "templateName": "DaoImpl",
+      "packageName": "dao.impl",
+      "suffix": "DaoImpl",
+      "fileType": "java"
+    },
+    {
+      "templateName": "Mapper",
+      "packageName": "mapper",
+      "suffix": "Mapper",
+      "fileType": "java"
+    },
+    {
+      "templateName": "ExpandMapper",
+      "packageName": "mapper.expand",
+      "suffix": "ExpandMapper",
+      "fileType": "java"
+    },
+    {
+      "templateName": "Entity",
+      "packageName": "entity",
+      "suffix": "",
+      "fileType": "java"
+    },
+    {
+      "templateName": "QueryCriteria",
+      "packageName": "queryCriteria",
+      "suffix": "QueryCriteria",
+      "fileType": "java"
+    }
+
+  ]
+}
